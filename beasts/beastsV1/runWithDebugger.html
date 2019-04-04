@@ -1,0 +1,64 @@
+
+<script>
+// FUNCTION
+//  It should run debugger on the passed in function (functionToDebug)
+//  It should pass the arguments from runWithDebugger to functionToDebug
+
+// RETURN VALUE
+//  It should return the return value of functionToDebug
+
+// SIGNATURE
+//  runWithDebugger(functionToDebug[,[arguments]])
+
+// EXAMPLES
+//  function sayFullName(first, last) {
+//    console.log(first + ' '  + last);
+//  }
+//  runWithDebugger(sayFullName, ['gordon', 'zhu']); 
+//  'gordon zhu'
+
+// PROTOTYPE IMPLEMENTATION
+//   1/SOLUTION 1: using ...args, 
+//
+//     ...args works without the [], i.e. runWithDebbuger(sayFullName, 'laurent','staub')
+//     But in fact, ...args is treated as an array with an undefined number of arguments
+//
+//     function runWithDebugger(functionToDebug, ...args){
+//       debugger;
+//       functionToDebug(...args);
+//     }
+//     runWithDebbuger(sayFullName, 'laurent','staub');
+//     laurent staub
+//     
+//     To make SOLUTION 1 work without apply, ...args needs to be treated as an array of args, so we get rid of ...
+//
+//     function runWithDebugger(functionToDebug, args){
+//       debugger;
+//       functionToDebug(...args);
+//     }
+//     runWithDebbuger(sayFullName, ['laurent','staub']);
+//     laurent staub
+//
+//     !! fails if no arguments, needs to manage this case as below in solution 2
+//
+//   2/SOLUTION 2: call/bind/apply
+//     We need to set the right context with the arguments and run the function (so bind is out)
+//     Between call and apply : call works without the [], so if we don't know the number of arguments, it does not work
+//     Here, we need to use apply that uses the second argument of runWithDebugger as an array to pass all argsToFunctionToDebug
+//
+// CASES
+//   It should work with arguments (one or several) to the functionToDebug
+//   It should work without arguments
+
+function runWithDebugger(functionToDebug, argsToFunctionToDebug) {
+  debugger;
+  // if the function to debug has arguments, we pass it through apply
+  if(argsToFunctionToDebug){
+    functionToDebug.apply(this, argsToFunctionToDebug);
+  // if the function to debug does not have arguments, we just call it
+  } else {
+    functionToDebug();
+  }
+}
+
+</script>

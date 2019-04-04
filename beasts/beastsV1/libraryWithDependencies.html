@@ -1,0 +1,114 @@
+<script src="../tinytest.js"></script>
+<script>
+// FUNCTION
+//  BASIC FUNCTION
+//    the default IIFE makes the librarySystem() function available to the window object
+//    to add a library, we pass libraryName and the callback function
+//    to call the library, we just pass the librayName
+
+
+// EXAMPLES
+//
+//  EXAMPLE OF BASIC FUNCTION
+//    librarySystem('app', function() {
+//      return 'app';
+//    });
+//    console.log(librarySystem('app')); // 'app'
+//
+//  EXAMPLE OF ADVANCED FUNCTION 1
+//    librarySystem('servantLib', [], function() {
+//      return 'loaded servantLib';
+//    });
+//
+//    librarySystem('masterLib', ['servantLib'], function(servantLib) {
+//      return 'masterLib with ' + servantLib;
+//    });
+//
+//    librarySystem('masterLib'); // 'masterLib with loaded servantLib'
+//
+//  EXAMPLE OF ADVANCED FUNCTION 2
+//  
+//    librarySystem('servantLib1', [], function() {
+//      return 'Gordon';
+//    });
+//
+//    librarySystem('servantLib2', [], function() {
+//      return 'W&C';
+//    });
+//
+//    librarySystem('masterLib', ['servantLib1', 'servantLib2'], function(servantLib1, servantLib2) {
+//      return servantLib1 + ' works at ' + servantLib2;
+//    });
+//
+//    librarySystem('masterLib'); // 'Gordon works at W&C'
+
+
+(function(){
+
+  var libraryStorage = {};
+
+  function librarySystem(libraryName, callback, optionalDependencies) {
+    // gets back the store library
+    if (arguments.length < 2) {
+      return libraryStorage[libraryName];
+
+    // if no dependencies, then just store the callback as is
+    } else if (!optionalDependencies){ 
+      libraryStorage[libraryName] = callback();
+
+    // if an array is present (empty or not), then we define the dependencies
+    } else {
+      var dependenciesArray = optionalDependencies.map(function(dependency){
+        return libraryStorage[dependency];
+      });
+      libraryStorage[libraryName] = callback.apply(this, dependenciesArray);
+    }
+  }
+
+  window.librarySystem = librarySystem;
+
+})()
+
+
+tests({
+
+'If passed two arguments or more, it should store the library in librarySystem': function() {
+  librarySystem('app', function() {
+    return 'app';
+  });
+
+  eq(librarySystem('app'), 'app');
+},
+
+'It should return a dependent library': function() {
+
+  librarySystem('servantLib', function() {
+    return 'loaded servantLib';
+  }, []);
+
+  librarySystem('masterLib', function(servantLib) {
+    return 'masterLib with ' + servantLib;
+  }, ['servantLib']);
+
+  eq(librarySystem('masterLib'), 'masterLib with loaded servantLib');
+},
+
+'It should return several dependent libraries': function() {
+  librarySystem('servantLib1', function() {
+    return 'Gordon';
+  },[]);
+
+  librarySystem('servantLib2', function() {
+    return 'W&C';
+  }, []);
+
+  librarySystem('masterLib', function(servantLib1, servantLib2) {
+    return servantLib1 + ' works at ' + servantLib2;
+  }, ['servantLib1', 'servantLib2']);
+
+  eq(librarySystem('masterLib'), 'Gordon works at W&C');
+}
+
+});
+
+</script>

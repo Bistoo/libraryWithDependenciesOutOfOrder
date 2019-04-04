@@ -1,0 +1,188 @@
+<script src="../tinytest.js"></script>
+<script>
+// FUNCTION
+//  BASIC FUNCTION
+//    the default IIFE makes the librarySystem() function available to the window object
+//    to add a library, we pass libraryName and the callback function
+//    to call the library, we just pass the librayName
+//
+//  ADVANCED FUNCTION
+//    a library should be able to use one or several other libraries
+//    even if these libraries are not yet created
+
+// EXAMPLES
+//
+//  EXAMPLE OF BASIC FUNCTION
+//
+//    librarySystem('app', function() {
+//      return 'app';
+//    });
+//    console.log(librarySystem('app')); // 'app'
+//
+//  EXAMPLE OF ADVANCED FUNCTION 1
+//
+//    librarySystem('servantLib', function() {
+//      return 'loaded servantLib';
+//    }, []);
+//
+//    librarySystem('masterLib', function(servantLib) {
+//      return 'masterLib with ' + servantLib;
+//    }, ['servantLib']);
+//
+//    librarySystem('masterLib'); // 'masterLib with loaded servantLib'
+//
+//  EXAMPLE OF ADVANCED FUNCTION 2
+//  
+//    librarySystem('servantLib1', function() {
+//      return 'Gordon';
+//    }, []);
+//
+//    librarySystem('servantLib2', function() {
+//      return 'W&C';
+//    }, []);
+//
+//    librarySystem('masterLib', function(servantLib1, servantLib2) {
+//      return servantLib1 + ' works at ' + servantLib2;
+//    }, ['servantLib1', 'servantLib2']);
+//
+//    librarySystem('masterLib'); // 'Gordon works at W&C'
+//
+//  EXAMPLE OF ADVANCED FUNCTION 3
+//
+//    librarySystem('workBlurb', function(name, company) {
+//      return name + ' works at ' + company;
+//    }, ['name', 'company']);
+//
+//    librarySystem('name', function() {
+//      return 'Gordon';
+//    }, []);
+//
+//    librarySystem('company', function() {
+//      return 'Watch and Code';
+//    }, []);
+//
+// librarySystem('workBlurb'); // 'Gordon works at Watch and Code'
+
+
+(function(){
+
+  var libraryStorage = {};
+
+  function librarySystem(libraryName, callback, optDepArray) {
+    
+    // CREATION: if more than one passed parameter
+    if (arguments.length > 1) {
+      // CREATION: if an array is present (empty or not), then we store the dependencies without running the callback
+      if (optDepArray) {
+        libraryStorage[libraryName] = {
+          callback: callback,
+          depLib: optDepArray
+        }
+
+      // CREATION: if no dependencies, then just store the callback as is and run it  
+      } else { 
+        libraryStorage[libraryName] = {
+          callback: callback(),
+          depLib: null
+        }
+      }
+
+    // USE: gets back the stored library  
+    } else {
+        // USE: if there were dependent libraries at creation, we run them now through the callback
+        if(libraryStorage[libraryName].depLib){
+          var depLibArray = libraryStorage[libraryName].depLib.map(function(dependency){
+            return libraryStorage[dependency].callback();
+          });
+          libraryStorage[libraryName].callback = libraryStorage[libraryName].callback.apply(this, depLibArray);
+          libraryStorage[libraryName].depLib = null;
+        }
+        return libraryStorage[libraryName].callback;
+      }
+  }
+
+  window.librarySystem = librarySystem;
+
+})()
+
+
+tests({
+
+  'If passed a library with no dependency, it should store the library in librarySystem': function() {
+    librarySystem('app', function() {
+      return 'app';
+    });
+
+    eq(librarySystem('app'), 'app');
+  },
+
+  'If passed a library with one dependent library, it should store the library with its dependency': function() {
+
+    librarySystem('servantLib', function() {
+      return 'loaded servantLib';
+    }, []);
+
+    librarySystem('masterLib', function(servantLib) {
+      return 'masterLib with ' + servantLib;
+    }, ['servantLib']);
+
+    eq(librarySystem('masterLib'), 'masterLib with loaded servantLib');
+  },
+
+  'If passed a library with several dependent libraries, it should store the library with its dependencies': function() {
+    librarySystem('servantLib1', function() {
+      return 'Gordon';
+    },[]);
+
+    librarySystem('servantLib2', function() {
+      return 'W&C';
+    }, []);
+
+    librarySystem('masterLib', function(servantLib1, servantLib2) {
+      return servantLib1 + ' works at ' + servantLib2;
+    }, ['servantLib1', 'servantLib2']);
+
+    eq(librarySystem('masterLib'), 'Gordon works at W&C');
+  },
+
+  'If passed a library with several dependent libraries, it should store the library with its dependencies, even if these dependencies are not created': function() {
+    librarySystem('workBlurb', function(name, company) {
+      return name + ' works at ' + company;
+    }, ['name', 'company']);
+
+    librarySystem('name', function() {
+      return 'Gordon';
+    }, []);
+
+    librarySystem('company', function() {
+      return 'Watch and Code';
+    }, []);
+
+    eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+  },
+
+  'If called several times, the callback function should run only once': function() {
+    librarySystem('workBlurb', function(name, company) {
+      return name + ' still works at ' + company;
+    }, ['name', 'company']);
+
+    librarySystem('name', function() {
+      return 'Gordon';
+    }, []);
+
+    librarySystem('company', function() {
+      return 'Watch and Code';
+    }, []);
+
+    librarySystem('workBlurb');
+
+    librarySystem('company', function() {
+      return 'W&C';
+    }, []);
+
+    eq(librarySystem('workBlurb'), 'Gordon still works at Watch and Code');
+  }
+
+});
+
+</script>
